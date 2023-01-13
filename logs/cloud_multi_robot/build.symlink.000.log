@@ -1,0 +1,3 @@
+Symlinking /home/mcg/catkin_ws/devel/share/cloud_multi_robot/cmake/cloud_multi_robotConfig-version.cmake
+Symlinking /home/mcg/catkin_ws/devel/share/cloud_multi_robot/cmake/cloud_multi_robotConfig.cmake
+Symlinking /home/mcg/catkin_ws/devel/lib/pkgconfig/cloud_multi_robot.pc

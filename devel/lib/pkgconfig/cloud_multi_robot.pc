@@ -1,0 +1,1 @@
+/home/mcg/catkin_ws/devel/.private/cloud_multi_robot/lib/pkgconfig/cloud_multi_robot.pc

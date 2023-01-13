@@ -1,0 +1,1 @@
+/home/mcg/catkin_ws/devel/.private/realsense2_description/lib/pkgconfig/realsense2_description.pc

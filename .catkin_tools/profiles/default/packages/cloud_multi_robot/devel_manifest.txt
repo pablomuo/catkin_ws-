@@ -1,0 +1,5 @@
+cloud_multi_robot
+/home/mcg/catkin_ws/devel/.private/cloud_multi_robot/cmake.lock /home/mcg/catkin_ws/devel/./cmake.lock
+/home/mcg/catkin_ws/devel/.private/cloud_multi_robot/share/cloud_multi_robot/cmake/cloud_multi_robotConfig-version.cmake /home/mcg/catkin_ws/devel/share/cloud_multi_robot/cmake/cloud_multi_robotConfig-version.cmake
+/home/mcg/catkin_ws/devel/.private/cloud_multi_robot/share/cloud_multi_robot/cmake/cloud_multi_robotConfig.cmake /home/mcg/catkin_ws/devel/share/cloud_multi_robot/cmake/cloud_multi_robotConfig.cmake
+/home/mcg/catkin_ws/devel/.private/cloud_multi_robot/lib/pkgconfig/cloud_multi_robot.pc /home/mcg/catkin_ws/devel/lib/pkgconfig/cloud_multi_robot.pc
