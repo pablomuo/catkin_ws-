@@ -203,71 +203,71 @@ if rank>(number_rooms*2)-1:
                 # to the room it is browsing
                 # At the begining all robots have ID=0, which mean they are inside room 0
 
-                # if len(agents.learning.memory_D)>=20:
-                #     log.message(" 6.Start to send memory D of lenght "+str(len(agents.learning.memory_D))+" "+str(rank))
-                #     if init:
-                #         init=False
-                #         data=np.array(agents.learning.memory_D)
-                #         req=comm.issend(data, dest=agents.ID, tag=11)
-                #         agents.learning.memory_D.clear()
-                #         log.message(" 6.1 after init Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
-                #     else:
-                #         if MPI.Request.Test(req):
-                #             data=np.array(agents.learning.memory_D)
-                #             MPI.Request.Wait(req)
-                #             req=comm.issend(data, dest=agents.ID, tag=11)
-                #             agents.learning.memory_D.clear()
-                #             log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
-                #
-                #
-                # if len(agents.learning.memory_GT)>=4:
-                #     log.message("8. Before Sending memory GT of lenght "+str(len(agents.learning.memory_GT))+" "+str(rank))
-                #     if init_G:
-                #         init_G=False
-                #         data_G=np.array(agents.learning.memory_GT)
-                #         req_g=comm.issend(data_G, dest=agents.ID, tag=21)
-                #         agents.learning.memory_GT.clear()
-                #         log.message("8. after init Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
-                #
-                #     else:
-                #         if MPI.Request.Test(req_g):
-                #             data_G=np.array(agents.learning.memory_GT)
-                #             MPI.Request.Wait(req_g)
-                #             req_g=comm.issend(data_G, dest=agents.ID, tag=21)
-                #             agents.learning.memory_GT.clear()
-                #             log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
-
-
-
-                if len(agents.learning.memory_D)>=128:
+                if len(agents.learning.memory_D)>=20:
                     log.message(" 6.Start to send memory D of lenght "+str(len(agents.learning.memory_D))+" "+str(rank))
                     if init:
                         init=False
                         data=np.array(agents.learning.memory_D)
-                        comm.send(data, dest=agents.ID, tag=11)
+                        req=comm.issend(data, dest=agents.ID, tag=11)
                         agents.learning.memory_D.clear()
                         log.message(" 6.1 after init Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
                     else:
-                        data=np.array(agents.learning.memory_D)
-                        comm.send(data, dest=agents.ID, tag=11)
-                        agents.learning.memory_D.clear()
-                        log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                        if MPI.Request.Test(req):
+                            data=np.array(agents.learning.memory_D)
+                            MPI.Request.Wait(req)
+                            req=comm.issend(data, dest=agents.ID, tag=11)
+                            agents.learning.memory_D.clear()
+                            log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
 
-                if len(agents.learning.memory_GT)>=2:
+                if len(agents.learning.memory_GT)>=4:
                     log.message("8. Before Sending memory GT of lenght "+str(len(agents.learning.memory_GT))+" "+str(rank))
                     if init_G:
                         init_G=False
                         data_G=np.array(agents.learning.memory_GT)
-                        comm.send(data_G, dest=agents.ID, tag=21)
+                        req_g=comm.issend(data_G, dest=agents.ID, tag=21)
                         agents.learning.memory_GT.clear()
                         log.message("8. after init Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
                     else:
-                        data_G=np.array(agents.learning.memory_GT)
-                        comm.send(data_G, dest=agents.ID, tag=21)
-                        agents.learning.memory_GT.clear()
-                        log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                        if MPI.Request.Test(req_g):
+                            data_G=np.array(agents.learning.memory_GT)
+                            MPI.Request.Wait(req_g)
+                            req_g=comm.issend(data_G, dest=agents.ID, tag=21)
+                            agents.learning.memory_GT.clear()
+                            log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
+
+
+
+                # if len(agents.learning.memory_D)>=128:
+                #     log.message(" 6.Start to send memory D of lenght "+str(len(agents.learning.memory_D))+" "+str(rank))
+                #     if init:
+                #         init=False
+                #         data=np.array(agents.learning.memory_D)
+                #         comm.send(data, dest=agents.ID, tag=11)
+                #         agents.learning.memory_D.clear()
+                #         log.message(" 6.1 after init Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                #     else:
+                #         data=np.array(agents.learning.memory_D)
+                #         comm.send(data, dest=agents.ID, tag=11)
+                #         agents.learning.memory_D.clear()
+                #         log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                #
+                #
+                # if len(agents.learning.memory_GT)>=2:
+                #     log.message("8. Before Sending memory GT of lenght "+str(len(agents.learning.memory_GT))+" "+str(rank))
+                #     if init_G:
+                #         init_G=False
+                #         data_G=np.array(agents.learning.memory_GT)
+                #         comm.send(data_G, dest=agents.ID, tag=21)
+                #         agents.learning.memory_GT.clear()
+                #         log.message("8. after init Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                #
+                #     else:
+                #         data_G=np.array(agents.learning.memory_GT)
+                #         comm.send(data_G, dest=agents.ID, tag=21)
+                #         agents.learning.memory_GT.clear()
+                #         log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
 
                 # ESTO AQUI NO, EN CLOUD 2
@@ -329,6 +329,9 @@ if rank>(number_rooms*2)-1:
 
                     # break
                 # print("DONE BEFORE DONE ", agents.done)
+                if agents.time_out(step):
+                    log.message("Time out!! of "+str(self.agent_name ))
+                    break
                 if agents.done:
                     #envia a CLOUD 2 AVISO PARA ACTUALIZAR PA
                     #check if has to go at the begining of done
@@ -348,9 +351,6 @@ if rank>(number_rooms*2)-1:
                         log.message("break becouse finish" +" to "+str(rank))
                         break
 
-                    if agents.time_out(step):
-                        log.message("Time out!! of "+str(self.agent_name ))
-                        break
                     if agents.evolve_rule:
                         agents.process="collision"
                         e +=1
