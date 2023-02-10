@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 #################################################################################
+
+#                                            codigo original
+
 #Copyright 2022 Elizabeth
 #
 #Licensed under the Apache License, Version 2.0 (the "License");

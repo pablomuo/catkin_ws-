@@ -198,23 +198,28 @@ class Behaviour(object):
 
         y_orientation=- 3.1416
         if self.ID==0:
-            # x=[-1,   1.5]
-            # y=[1.5,0.5]
-            x=[-0.8, -0.8]
-            y=[-0.8, 0]
-            # x=[1.3,-1,-1,   1.5]
-            # y=[0,-1,1.5,0.5]
-            # x=[0,1,0.7, 2 , -4, 0,  -3,-4.5,3]
-            # y=[0,2,  3,-1 ,3.5,-3,-3.5,   4,4]
+            # 2 rooms small
+            x=[0, 0]
+            y=[1.0, 0.5]
+
+            # 4 rooms original
+            # x=[-0.8, -0.8]
+            # y=[-0.8, 0]
+
         elif self.ID==1:
-            x=[-1,1]
-            y=[ -6,-6]
-        elif self.ID==2:
-            x=[-1,1]
-            y=[ -6,-6]
-        elif self.ID==3:
-            x=[-0.8,-0.8]
-            y=[-0.8,0]
+            # 2 rooms small
+            x=[1.4, -1]
+            y=[-1, -2]
+
+            # 4 rooms original
+            # x=[-1,1]
+            # y=[ -6,-6]
+        # elif self.ID==2:
+        #     x=[-1,1]
+        #     y=[ -6,-6]
+        # elif self.ID==3:
+        #     x=[-0.8,-0.8]
+        #     y=[-0.8,0]
         else:
             raise Exception("There is not room with this ID "+str(self.ID))
 

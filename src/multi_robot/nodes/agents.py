@@ -33,6 +33,7 @@ from reinforcenment import ReinforcementNetwork
 from rooms import Check_room
 from target import Target
 from math import pi
+from check_vector import Check_vectors
 import numpy
 import os
 import sys
@@ -44,7 +45,16 @@ class Agent(object):
     ""
     ""
 
-    def __init__(self,agent_name,action_size,state_size,number_episode,rank,number_rooms,number_robot, log, cloud_ID, min_action_time=0.25):
+    def __init__(self,agent_name,action_size,state_size,number_episode,rank,number_rooms,number_robot, log, cloud_ID,type_robot,rank_cloud,min_action_time=0.25):
+        self.type_robot                   = type_robot
+        self.action_done                  = 2
+        self.action_done_past             = 2
+        self.scan_data_past               = 24*[0]
+        self.vel_lineal                   = 0
+        self.vel_ang                      = 0
+        self.start_data                   = False
+        self.reset_data_cont              = True
+
         self.rank                         = rank
         self.log                          = log
         self.number_rooms                 = number_rooms
@@ -100,6 +110,32 @@ class Agent(object):
         self.old_ID                       = self.__ID
         self.room                         = Check_room()
         self.Romm_ID                      = [0,0,0]
+        self.vectors                      = Check_vectors()
+        self.rank_cloud                   = rank_cloud
+        self.done_laser                   = False
+        self.done_cam                     = False
+        self.__crashed_las_check          = False
+        self.__crash_counter_laser        = 0
+        if self.type_robot == 0:   #angulos de los haces con la camara de 90 y los valores del vector de 24 que da la camara en la parte izq y derecha  (el haz o y 23 no se tiene en cuenta porque su angulo es 0)
+            self.ang_vect = [0, 12.86, 25.72, 38.58, 55.22, 71.86, 88.5, 105.14, 121.78, 138.42, 155.06, 171.7, 188.34, 204.98, 221.62, 238.26, 254.9, 271.54, 288.18, 304.82, 321.46, 334.32, 347.18, 360]
+            self.n_izq = [0, 1, 2, 3]
+            self.n_der = [23,22,21,20]
+            self.val_cam = 3
+        elif self.type_robot == 1:    #angulos de los haces con la camara de 120
+            self.ang_vect = [0, 13.35, 26.7, 40.05, 53.4, 70.28, 87.16, 104.04, 120.92, 137.8, 154.68, 171.56, 188.44, 205.32, 222.2, 239.08, 255.96, 272.84, 289.72, 306.6, 319.95, 333.3, 346.65, 360]
+            self.n_izq = [0, 1, 2, 3, 4]
+            self.n_der = [23,22,21,20,19]
+            self.val_cam = 4
+        elif self.type_robot == 2:    #angulos de los haces con la camara de 150
+            self.ang_vect = [0, 13.64, 27.28, 40.92, 54.56, 68.2, 85.4, 102.6, 119.8, 137, 154.2, 171.4, 188.6, 205.8, 223, 240.2, 257.4, 274.6, 291.8, 305.44, 319.08, 332.72, 346.36, 360]
+            self.n_izq = [0, 1, 2, 3, 4, 5]
+            self.n_der = [23,22,21,20,19,18]
+            self.val_cam = 5
+        elif self.type_robot == 3:    #angulos de los haces con la camara de 180
+            self.ang_vect = [0, 13.665, 27.33, 40.995, 54.66, 68.325, 81.99, 99.81, 117.63, 135.45, 153.27, 171.09, 188.91, 206.73, 224.55, 242.37, 260.19, 278.01, 291.675, 305.34, 319.005, 332.67, 346.335, 360]
+            self.n_izq = [0, 1, 2, 3, 4, 5, 6]
+            self.n_der = [23,22,21,20,19,18,17]
+            self.val_cam = 6
 
 
     def call_sub(self,agent_name,action_size,state_size,number_episode,rank):
@@ -113,7 +149,7 @@ class Agent(object):
         self.robot_position_x             = 0
         # self.pub_scan                     = rospy.Publisher(self.agent_name+'/scan_out', Float64MultiArray, queue_size=24)
         self.__pathfinding                = pathfinding(self.laser_angles/360.*2*np.pi)
-        self.learning                     = ReinforcementNetwork(state_size,action_size,number_episode,self.load)
+        self.learning                     = ReinforcementNetwork(state_size,action_size,number_episode,self.load,self.rank_cloud)
         self.start_time                   = time.time()
         self.dist_a2a                     = []
         self.hea_a2a                      = []
@@ -196,39 +232,164 @@ class Agent(object):
 
     @property
     def scan_data(self):
-        '''
-        Get data of the laser
-        '''
-        if self.__step_cache == self.step and not self.force_update :
-            scan_data=self.__scan_data_cache
+
+        if self.type_robot >= 5:
+            '''
+            Get data of the laser
+            '''
+            if self.__step_cache == self.step and not self.force_update:
+                scan_data=self.__scan_data_cache
+            else:
+                data = None
+                while data is None:
+                    try:
+                        data = rospy.wait_for_message('/'+self.agent_name+'/scan', LaserScan, timeout=5)
+                        # data = rospy.wait_for_message('/camera_sync_1cam_laser', LaserScan, timeout=5)
+                    except:
+                        pass
+                scan = data
+                scan_data = []
+                for i in range(len(scan.ranges)):
+                    if scan.ranges[i] == float("Inf"):
+                        scan_data.append(3.5)
+                    elif np.isnan(scan.ranges[i]):
+                        scan_data.append(0)
+                    else:
+                        scan_data.append(scan.ranges[i])
+                if np.any(np.isnan(np.array(scan_data))):
+                    raise Exception("it's nan sensor")
+
+                self.__step_cache     = self.step
+                self.__scan_data_cache = scan_data
+                self.force_update      = False
+        # print(scan_data)
+        # return scan_data
+
+
+        elif self.type_robot == 4:
+            '''
+            Get data of the two cameras
+            '''
+            if self.__step_cache == self.step and not self.force_update:
+                scan_data=self.__scan_data_cache
+            else:
+                data = None
+                while data is None:
+                    try:
+                        data = rospy.wait_for_message('/'+self.agent_name+'/camera_sync', LaserScan, timeout=5)
+                        # data = rospy.wait_for_message('/camera_sync', LaserScan, timeout=5)
+                    except:
+                        pass
+
+                scan = data
+                scan_data = []
+
+                # for i in range(len(scan.ranges)):
+                #     scan_data.append(scan.ranges[i])
+
+                for i in range(len(scan.ranges)):
+                    scan_data.append(scan.ranges[i])       #se cogen los 48 valores y se envían, fuera se separarán
+
+                if np.any(np.isnan(np.array(scan_data))):
+                    raise Exception("it's nan sensor")
+
+                self.__step_cache     = self.step
+                self.__scan_data_cache = scan_data
+                self.force_update      = False
+
+
         else:
-            data = None
-            while data is None:
-                try:
-                    data = rospy.wait_for_message(self.agent_name+'/scan', LaserScan, timeout=5)
-                except:
-                    pass
-            scan = data
-            scan_data = []
-            for i in range(len(scan.ranges)):
-                if scan.ranges[i] == float("Inf"):
-                    scan_data.append(3.5)
-                elif np.isnan(scan.ranges[i]):
-                    scan_data.append(0)
+            '''
+            Get data of the camera
+            '''
+            if self.__step_cache == self.step and not self.force_update:
+                scan_data=self.__scan_data_cache
+            else:
+                data = None
+                while data is None:
+                    try:
+                        data = rospy.wait_for_message('/'+self.agent_name+'/camera_laser_sync', LaserScan, timeout=5)
+                        # data = rospy.wait_for_message('/camera_sync', LaserScan, timeout=5)
+                    except:
+                        pass
+
+                scan = data
+                scan_data = []
+
+                # for i in range(len(scan.ranges)):
+                #     scan_data.append(scan.ranges[i])
+
+                for i in range(len(scan.ranges)):
+                    scan_data.append(scan.ranges[i])       #se cogen los 48 valores y se envían, fuera se separarán
+
+                if np.any(np.isnan(np.array(scan_data))):
+                    raise Exception("it's nan sensor")
+
+
+                #  -----------------------------------------------------------------------------------------------------------------
+                if self.start_data == True:       #se empieza a rellenar datos cuando ya ha habido una primera accion ejecutada
+                    if sum(self.scan_data_past) != 0 or self.reset_data_cont == False:#and self.action_done == self.action_done_past:   si no se cumple esto es porque es la primera accion o que ha vuelto a la posicion inicial
+                        self.vectors.check_dist_angle(self.diff_time, self.vel_lineal, self.vel_ang)
+
+                        if self.action_done == 0 or self.action_done == 1:
+                            scan_data, self.n_izq, self.n_der = self.vectors.act_0_1_izq(scan_data, self.scan_data_past, self.ang_vect, self.n_izq, self.n_der, self.val_cam)
+                            print(self.n_izq)
+                            print(self.n_der)
+
+                        elif self.action_done == 2:
+                            scan_data, self.n_izq, self.n_der = self.vectors.act_2(scan_data, self.scan_data_past, self.ang_vect, self.n_izq, self.n_der, self.val_cam, self.action_done_past, self.action_done)
+                            print(self.n_izq)
+                            print(self.n_der)
+
+                        elif self.action_done == 3 or self.action_done == 4:
+                            scan_data, self.n_izq, self.n_der = self.vectors.act_3_4_der(scan_data, self.scan_data_past, self.ang_vect, self.n_izq, self.n_der, self.val_cam)
+                            print(self.n_izq)
+                            print(self.n_der)
+
+                        elif self.action_done == 5 and self.action_done_past == 5:
+                            scan_data, self.n_izq, self.n_der = self.vectors.act_5(scan_data, self.scan_data_past, self.n_izq, self.n_der, self.val_cam)
+                            print(self.n_izq)
+                            print(self.n_der)
+
+                        self.action_done_past = self.action_done
+                        self.scan_data_past = scan_data[0:24]
+
+                    else:
+                        self.scan_data_past = scan_data[0:24]
+                        self.action_done_past = self.action_done
+                        self.reset_data_cont = False
+
                 else:
-                    scan_data.append(scan.ranges[i])
-            if np.any(np.isnan(np.array(scan_data))):
-                raise Exception("it's nan sensor")
+                    pass
 
-            self.__step_cache     = self.step
-            self.__scan_data_cache = scan_data
-            self.force_update       = False
-            # scan_data2 = Float64MultiArray()
-            # scan_data12=np.array(scan_data)
-            # scan_data2.data = scan_data12
-            # self.pub_scan.publish(scan_data2)
 
-        return scan_data
+                self.__step_cache     = self.step
+                self.__scan_data_cache = scan_data
+                self.force_update      = False
+
+                self.start_data = False            # ver si poner
+            # print(scan_data)
+            #return scan_data
+                # print(scan_data)
+        return(scan_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+
 
     def perform_action(self,act):
         '''
@@ -251,18 +412,27 @@ class Agent(object):
         if action == self.__backward_action:
             vel_cmd.linear.x = -0.15
             vel_cmd.angular.z = 0
+            self.vel_lineal = -0.15
+            self.vel_ang = 0
 
         elif action == self.__forward_action:
             vel_cmd.linear.x = 0.15
             vel_cmd.angular.z = 0
             self.stand=False
+            self.vel_lineal = 0.15
+            self.vel_ang = 0
 
         else:
             vel_cmd.linear.x = 0.12
             vel_cmd.angular.z = ang_vel
+            self.vel_lineal = 0.12
+            self.vel_ang = ang_vel
 
             self.vel_cmd=vel_cmd
         self.pub_cmd_vel.publish(vel_cmd)
+
+        self.action_done = action
+        self.start_data = True
 
 
     def reset(self):
@@ -277,13 +447,14 @@ class Agent(object):
         self.step           = -10
         self.score          = 0
         self.cont          = 0
+        self.done_laser    = False
 
     @property
     def laser_angles(self):
         """
           Returns the angles of the laser
         """
-        scan_data = self.scan_data
+        scan_data = self.scan_data[0:24]
         angles = 360./(len(scan_data)-1)*np.arange(len(scan_data))
         angles[angles>180] = angles[angles>180]-360
 
@@ -316,14 +487,14 @@ class Agent(object):
         """
         Calculates the free distance to the goal, using laser information
         """
-        scan_data = np.array(self.scan_data)
+        scan_data = np.array(self.scan_data[0:24])
         sortkey = np.argsort(abs(np.rad2deg(self.heading)-self.laser_angles))[0:3]
 
         return np.min(scan_data[sortkey])
 
     @property
     def status_regions(self):
-        scan_data =self.scan_data
+        scan_data =self.scan_data[0:24]
         regions = {
         'right':  min(scan_data[16:20]),
         'sright':  max(scan_data[15:19]),
@@ -351,11 +522,11 @@ class Agent(object):
             self.__process = "follow_path"
         elif self.__process=="follow_path":
             # Only drive to goal if the distance to the goal is okay and not blocked
-            if (free_dist>goal_dist) and (min(self.scan_data)>0.20):
+            if (free_dist>goal_dist) and (min(self.scan_data[0:24])>0.20):
                 self.__desired_angle = self.__find_good_angle()
                 self.__process="driving_to_goal"
         elif self.__process=="driving_to_goal":
-            if min(self.scan_data)<=self.__avoid_distance/1.5:
+            if min(self.scan_data[0:24])<=self.__avoid_distance/1.5:
             # if self.status_regions["front"]<=self.__avoid_distance/1.5:
                 self.__process="follow_path"
         elif self.__process=="collision":
@@ -367,7 +538,7 @@ class Agent(object):
             '''
             Look for an obstacle free angle
             '''
-            scan         = np.array(self.scan_data)
+            scan         = np.array(self.scan_data[0:24])
             laser_angles = np.array(self.laser_angles)
             mask         = scan>self.__avoid_distance
             indices      = np.arange(len(laser_angles))
@@ -394,7 +565,7 @@ class Agent(object):
         """
           Make one step with the robot
         """
-        scan = np.array(self.scan_data)
+        scan = np.array(self.scan_data[0:24])
         # Update the map, probably not necessary every step
         if (self.step % 1 == 0) and (self.step!=0):
             self.__pathfinding.update_map(self.position,self.environment.target_position.position,self.heading,scan)
@@ -439,23 +610,55 @@ class Agent(object):
         if self.__state_step_cache != self.step:
             current_distance= self.environment.get_current_Distance(self.robot_position_x,self.robot_position_y)
             heading = self.heading
-            scan_data = self.scan_data
-            # self.done=False # I don-t think it is neccesary ..check
+
+###############################################   cuando hay una sola amara, tambien se leen los valores del laser para comprobar las colisione por si la camara no la lee bien en los valores que rellena
+            scan_data = self.scan_data[0:24]
+            if self.type_robot <= 3:
+                check_laser = self.scan_data[24:48]
+            else:
+                check_laser = self.scan_data[0:24]
 
             if ((self.min_range >= min(scan_data) > 0) and (not self.__crashed)) \
                 or ((self.min_range >= min(scan_data) > 0) and (self.__crash_counter>5))  :
-                # print("colission !!!!!!!",min(scan_data))
+                self.log.message(" "+str(self.agent_name)+" collision detected by camera, position "+str(min(scan_data)))
+                sys.stdout.flush()
+
+                self.reset_data_cont = True
                 self.done = True
                 self.__crashed = True
                 self.__crash_counter = 0
                 self.__process = "collision"
                 self.__coll_count = 0
+                self.__crashed_las_check = False
+
+                self.done_cam = True
             elif (self.min_range >= min(scan_data) > 0) and (self.__crashed):
                  self.__crash_counter += 1
+                 self.__crash_counter_laser += 1
             elif (self.min_range < min(scan_data)):
-                 self.__crashed = False
+                self.__crashed = False
+                self.__crashed_las_check = False
 
-            wall_dist = min(self.scan_data)
+            if ((self.min_range >= min(check_laser) > 0) and (not self.__crashed_las_check)) \
+                or ((self.min_range >= min(check_laser) > 0) and (self.__crash_counter_laser>5))  :
+                self.log.message(" "+str(self.agent_name)+" collision detected by laser, position "+str(min(check_laser)))
+                sys.stdout.flush()
+
+                self.reset_data_cont = True
+                self.done = True
+                self.__crashed = True
+                self.__crash_counter = 0
+                self.__process = "collision"
+                self.__coll_count = 0
+
+                self.done_laser = True
+                self.__crashed_las_check = True
+                self.__crash_counter_laser = 0
+
+
+############################################################
+
+            wall_dist = min(self.scan_data[0:24])
             # goal_heading_initial= self.last_heading[0]
             goal_heading_initial= self.goal_heading_initial
             # print("HEEEEEEEEEA")
@@ -544,7 +747,7 @@ class Agent(object):
                 +"   "+"score".rjust(10," ")+"   "+"robot_x".rjust(10," ")\
                 +"   "+"robot_y".rjust(10," ")+"  "+"goal_x".rjust(10," ")\
                 +"   "+"goal_y".rjust(10," ") +"   " +"e_r".rjust(1," ")\
-                +"   " +"win".rjust(4," ")+"   " +"fail".rjust(4," ")\
+                +"   " +"win".rjust(4," ")+"   " +"fail".rjust(4," ")+"   " +"f_cam".rjust(4," ")+"   " +"f_laser".rjust(4," ")\
                 +"   "+"t_h".rjust(2," ")+"   "+"t_m".rjust(2," ")\
                 +"   "+"t_s".rjust(2," ")+"\n")
         m, s = divmod(int(time.time() - self.start_time), 60)
@@ -554,7 +757,7 @@ class Agent(object):
             +"   "+"{: .3e}".format(self.score)+"   "+"{: .3e}".format(self.robot_position_x)\
             +"   "+"{: .3e}".format(self.robot_position_y)+"   "+"{: .3e}".format(self.environment.goal_x) \
             +"   "+"{: .3e}".format(self.environment.goal_y) +"   " +str(int(self.evolve_rule))\
-            +"   " +str(int(self.environment.get_goalbox))+"   " +str(int(self.done))\
+            +"   " +str(int(self.environment.get_goalbox))+"   " +str(int(self.done))+"   " +str(int(self.done_cam))+"   " +str(int(self.done_laser))\
             +"   "+"{:8d}".format(h)+"   "+"{:02d}".format(m) \
             +"   "+"   "+"{:02d}".format(s) +"\n")
 
@@ -601,6 +804,7 @@ class Agent(object):
 
         else:
             # Returns to the agent's origin position and calculates the distance to the target
+            self.reset_data_cont = True
             self.log.message("before else twist")
             self.pub_cmd_vel.publish(Twist())
             self.log.message("after else twist")

@@ -22,14 +22,21 @@ class Check_room(object):
     """docstring for ."""
 
     def __init__(self):
-        self.room_0_x =[-3,2.3]
-        self.room_0_y =[-2.3,3]
-        self.room_1_x =[-3,2.3]
-        self.room_1_y =[-7.5,-2.3]
-        self.room_2_x =[2.3,7.5]
-        self.room_2_y =[-7.5,-2.3]
-        self.room_3_x =[2.3,7.5]
-        self.room_3_y =[-2.3,3]
+        # DOS ROOMS SMALL
+        self.room_0_x =[-2.840,3.015]
+        self.room_0_y =[-0.13,5.88]
+        self.room_1_x =[-2.840,3.015]
+        self.room_1_y =[-5.73,-0.14]
+
+        # 4 rooms original
+        # self.room_0_x =[-3,2.3]
+        # self.room_0_y =[-2.3,3]
+        # self.room_1_x =[-3,2.3]
+        # self.room_1_y =[-7.5,-2.3]
+        # self.room_2_x =[2.3,7.5]
+        # self.room_2_y =[-7.5,-2.3]
+        # self.room_3_x =[2.3,7.5]
+        # self.room_3_y =[-2.3,3]
 
     def check_room(self,x_robot,y_robot):
         if (self.room_0_x[1]>= x_robot >= self.room_0_x[0]) and\
@@ -38,11 +45,12 @@ class Check_room(object):
         elif (self.room_1_x[1]>= x_robot >= self.room_1_x[0]) and\
               (self.room_1_y[1]>= y_robot >= self.room_1_y[0]):
            return 1
-        elif (self.room_2_x[1]>= x_robot >= self.room_2_x[0]) and\
-              (self.room_2_y[1]>= y_robot >= self.room_2_y[0]):
-           return 2
-        elif (self.room_3_x[1]>= x_robot >= self.room_3_x[0]) and\
-              (self.room_3_y[1]>= y_robot >= self.room_3_y[0]):
-           return 3
+
+        # elif (self.room_2_x[1]>= x_robot >= self.room_2_x[0]) and\
+        #       (self.room_2_y[1]>= y_robot >= self.room_2_y[0]):
+        #    return 2
+        # elif (self.room_3_x[1]>= x_robot >= self.room_3_x[0]) and\
+        #       (self.room_3_y[1]>= y_robot >= self.room_3_y[0]):
+        #    return 3
         else:
             raise Exception("There is no room, check your data x: "+str(x_robot)+" y: "+str(y_robot))

@@ -40,11 +40,23 @@ class Target(object):
         # self.init_goal_x = [4,-2.5,-2, 4, 0,-3,0][self.ini]
         # self.init_goal_y = [4, 0.5,-3,-1,-1, 0,0][self.ini]
         if self.ID==0:
-            self.init_goal_x =-0.5
-            self.init_goal_y=0.5
+            # 2 rooms small
+            self.init_goal_x =0
+            self.init_goal_y=3
+
+            # 4 rooms original
+            # self.init_goal_x =-0.5
+            # self.init_goal_y=0.5
+
         else:
-            self.init_goal_x =0.5
-            self.init_goal_y=-6
+            # 2 rooms small
+            self.init_goal_x =1.5
+            self.init_goal_y=-2.6
+
+            # 4 rooms original
+            # self.init_goal_x =0.5
+            # self.init_goal_y=-6
+
 
         # self.init_goal_x =[1.3,-1,-1,   1.5][self.ini]
         # self.init_goal_y=[ 0,  -1, 1.5, 0.4][self.ini]
@@ -79,27 +91,30 @@ class Target(object):
             self.deleteModel()
         while position_check:
             if self.ID==0:
-                # goal_x_list = [-2,   1,      -3]
-                # goal_y_list = [-3.2, 3.2,  10]
-                # goal_x_list = [-1,0,1,-2,   1,   2, -2, 3, -3, -1.5, 1, 2,   -2,   3,   4,   -4,-4,-4.5, 3,  -2.3, 2,   -3, -3.5, 1.5,  0 ,  4,-1.5, 3, 3,    0,  -4,    4,1.5    ,-3]
-                # goal_y_list = [0.5,-1,-1,-3.2, 3.2, 2, -4, 4, -4, 2,   -3, -3.5, 3.3, -4, -0.5 , 4,-4, 0,   -0.5, 0,   -2, -1.5, 3.5,-3.5, -4,   4, 2.5, 2,-2.6,    5,   3, -3, 1.5  ,10]
-                #goal for box
-                # goal_x_list = [1.8,-1,  2, 0.6,  1.9,  0.7, 0.2, -1.3, -1, -1.9,  0.5,   2, 0.5, 0.3, -0.1, -2,  -0.6,-0.6]
-                # goal_y_list = [1.8,-2,-1.8,  0,  -0.5, -1.9, 1.5, -0.9,  1,  1.1, -1.5, 1.5, 1.8, -1, 1.6, -0.8, 0.5,-0.5]
-                goal_x_list = [-1, 1.8, 0.6, 1.9,  0.7, 0.2, -1.3, -1, -1.9,  0.5, 0.5, 0, -0.1, -2,  -0.5]
-                goal_y_list = [-1.7,-1.8, 0,  -0.5, -1.9, 1.5, -0.9,  1,  1.1, -1.5, 1.8, -1, 1.6, -0.8, 0.5]
+                # 2 rooms small
+                goal_x_list = [2.2, 2, 0.9, 0, -2.2, -1.4, -0.6, 2.1, -1.2, 0]
+                goal_y_list = [4.5, 0.6, 0.9, 4.7, 0.7, 5, 1.5, 2.2, 3.2, 3]
+
+                # 4 rooms original
+                # goal_x_list = [-1, 1.8, 0.6, 1.9,  0.7, 0.2, -1.3, -1, -1.9,  0.5, 0.5, 0, -0.1, -2,  -0.5]
+                # goal_y_list = [-1.7,-1.8, 0,  -0.5, -1.9, 1.5, -0.9,  1,  1.1, -1.5, 1.8, -1, 1.6, -0.8, 0.5]
 
             if self.ID==1:
-                goal_x_list =[0.5, 1, 1.8, -0.5, -2,-2 ,0,2, -1.5,1.9]
-                goal_y_list =[-6,-3, -3,-4.1,-4.1, -3,-6,-5,-6.5 ,-0.5]
+                # 2 rooms small
+                goal_x_list = [1.85, 2.4, 2, 0.41, -2.2, 1.5, -2, -1.9, 0.3, -0.9, 0.1]
+                goal_y_list = [-1.3, -2.8, -4.7, -4.9, -1.1, -2.6, -4.5, -2.6, -1, -1.8, -3.7]
 
-            if self.ID==2:
-                goal_x_list =[1,4,4,3]
-                goal_y_list =[-3,-4,-6,-3.5]
+                # 4 rooms original
+                # goal_x_list =[0.5, 1, 1.8, -0.5, -2,-2 ,0,2, -1.5,1.9]
+                # goal_y_list =[-6,-3, -3,-4.1,-4.1, -3,-6,-5,-6.5 ,-0.5]
 
-            if self.ID==3:
-                goal_x_list =[-1,4,5,5]
-                goal_y_list =[1,0,1.5,-1.5]
+            # if self.ID==2:
+            #     goal_x_list =[1,4,4,3]
+            #     goal_y_list =[-3,-4,-6,-3.5]
+            #
+            # if self.ID==3:
+            #     goal_x_list =[-1,4,5,5]
+            #     goal_y_list =[1,0,1.5,-1.5]
 
             # goal for corridor
             # goal_x_list = [0.5,1,    2  ,3 , 4  ,7 , 9  ,  12,   4.5, 7.5,-1,-4, -1,-5,  -7.5,-9,-10,-11,9.5]

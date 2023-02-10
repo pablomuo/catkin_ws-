@@ -182,19 +182,21 @@ if rank>number_rooms-1:
                 # The agent starts to send its memory to the corresponding cloud(ID)
                 # to the room it is browsing
                 # At the begining all robots have ID=0, which mean they are inside room 0
-                if len(agents.learning.memory_D)>=128:
+                if len(agents.learning.memory_D)>=20:
                     log.message(" 6.Start to send memory D"+" "+str(rank))
                     if init:
                         init=False
                         data=np.array(agents.learning.memory_D)
                         req=comm.issend(data, dest=agents.ID, tag=2*(size+1)+agents.ID*10000)
                         agents.learning.memory_D.clear()
+                        log.message(" 6.1 memory D sent"+" "+str(rank))
                     else:
                         if MPI.Request.Test(req):
                             data=np.array(agents.learning.memory_D)
                             MPI.Request.Wait(req)
                             req=comm.issend(data, dest=agents.ID, tag=2*(size+1)+agents.ID*10000)
                             agents.learning.memory_D.clear()
+                            log.message(" 6.1 memory D sent"+" "+str(rank))
 
                 if len(agents.learning.memory_GT)>=2:
                     log.message("8. Before Sending memory GT"+" "+str(rank))
@@ -271,6 +273,9 @@ if rank>number_rooms-1:
 
                     # break
                 # print("DONE BEFORE DONE ", agents.done)
+                if agents.time_out(step):
+                    log.message("Time OUT!!")
+                    break
                 if agents.done:
                     #check if has to go at the begining of done
                     if not comm.Iprobe(source=agents.ID,tag=4*(size+1)+agents.ID*10000):
@@ -422,10 +427,13 @@ if rank<number_rooms:
             if comm.Iprobe(source=MPI.ANY_SOURCE,tag=2*(size+1)+rank*10000):
                 log.message("7.0 waiting append data memory D " + str(rank) +"tag: "+str(2*(size+1)+rank*10000))
                 data = comm.recv(source=MPI.ANY_SOURCE, tag=2*(size+1)+rank*10000)
+                # print("memory")
+                # print(data)
                 for i in range(len(data)):
                     cluster.append_D(data[i][0], data[i][1],data[i][2], data[i][3], data[i][4])
+                log.message("7.1 data memory D  appended" + str(rank) +"tag: "+str(2*(size+1)+rank*10000))
             # Ask if any agent has sent data from memory_G
-            log.message("7.0 waiting append data memory D " + str(rank) +"tag: "+str(3*(size+1)+rank*10000))
+            # log.message("7.0 waiting append data memory D " + str(rank) +"tag: "+str(3*(size+1)+rank*10000))
             if comm.Iprobe(source=MPI.ANY_SOURCE,tag=3*(size+1)+rank*10000):
                 log.message("9.1 waiting second append data " + str(rank))
                 data_G = comm.recv(source=MPI.ANY_SOURCE, tag=3*(size+1)+rank*10000)
@@ -443,6 +451,8 @@ if rank<number_rooms:
                         log.message("11.0 waiting for send network " + str(rank)+ " to "+str(g))
                         #Sending q network to each agent
                         comm.send(weight_q,dest=g,tag=1*(size+1)+rank*10000+g+100)
+                        print("pesos recibidos. PA: ", cluster.Pa)
+                        print(weight_q)
                         log.message("11.0 send q network " + str(rank) + " to "+ str(g))
                         #Sending target network to each agent
                         comm.send(weight_target,dest=g,tag=2*(size+1)+rank*10000+g+100)

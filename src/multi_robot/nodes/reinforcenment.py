@@ -34,7 +34,7 @@ class ReinforcementNetwork(object):
     """
     Algorithm DDRLE-GE
     """
-    def __init__(self,state_size,action_size,number_episode,load):
+    def __init__(self,state_size,action_size,number_episode,load,rank_cloud):
         self.dirPath            = os.path.dirname(os.path.realpath(__file__))
         self.dirPath            = self.dirPath.replace('multi_robot/nodes', 'multi_robot/save_model/environment')
         # self.dirPath            =  "/home/mcg/catkin_ws/src/multi_robot/save_model/environment"
@@ -73,16 +73,18 @@ class ReinforcementNetwork(object):
         self.q_model              = self.q_network()
         self.target_model         = self.target_network()
 
+        self.rank_cloud           = rank_cloud
+
         if self.load_model:
-            self.q_model.set_weights(load_model(self.dirPath+str(self.load_episode)+'_q_model'+".h5").get_weights())
-            self.target_model.set_weights(load_model(self.dirPath+str(self.load_episode)+'_target_model'+".h5").get_weights())
+            self.q_model.set_weights(load_model(self.dirPath+str(self.load_episode)+'_'+str(self.rank_cloud)+'_q_model'+".h5").get_weights())
+            self.target_model.set_weights(load_model(self.dirPath+str(self.load_episode)+'_'+str(self.rank_cloud)+'_target_model'+".h5").get_weights())
             self.Pa,self.Pbest= self.load_mode()
         else:
             self.q_model              = self.q_network()
             self.target_model         = self.target_network()
 
     def load_mode(self):
-        with open(self.dirPath+str(self.load_episode)+'.json') as outfile:
+        with open(self.dirPath+str(self.load_episode)+'_'+str(self.rank_cloud)+'.json') as outfile:
             param = json.load(outfile)
             Pa = param.get('Pa')
             Pbest = param.get('Pbest')
@@ -288,7 +290,19 @@ class ReinforcementNetwork(object):
         param_keys = ['Pa','Pbest']
         param_values = [self.Pa, self.Pbest]
         param_dictionary = dict(zip(param_keys, param_values))
-        with open(self.dirPath +"_"+str(rank)+ str(e) + '.json', 'w') as outfile:
+        with open(self.dirPath + str(e) +'_'+str(self.rank_cloud)+ '.json', 'w') as outfile:
+            json.dump(param_dictionary, outfile)
+
+    def save_model_to_check(self,rank,e):
+        '''
+        Save .h5 files with weights and .json with Pa, Pbest
+        '''
+        self.q_model.save(self.dirPath + str(e)+"_"+str(rank)+'_q_model_to_check' +'.h5')
+        self.target_model.save(self.dirPath + str(e) +"_"+str(rank)+'_target_model_to_check'+'.h5')
+        param_keys = ['Pa','Pbest']
+        param_values = [self.Pa, self.Pbest]
+        param_dictionary = dict(zip(param_keys, param_values))
+        with open(self.dirPath +"_"+str(rank)+ str(e) + '_to_check.json', 'w') as outfile:
             json.dump(param_dictionary, outfile)
 
     def experience_replay(self):

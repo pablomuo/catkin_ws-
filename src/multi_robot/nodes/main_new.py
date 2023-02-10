@@ -212,15 +212,15 @@ if rank>(number_rooms*2)-1:
                         agents.learning.memory_D.clear()
                         log.message(" 6.1 after init Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
                     else:
-                        if MPI.Request.Test(req):
-                            data=np.array(agents.learning.memory_D)
-                            MPI.Request.Wait(req)
-                            req=comm.issend(data, dest=agents.ID, tag=11)
-                            agents.learning.memory_D.clear()
-                            log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                        # if MPI.Request.Test(req):
+                        data=np.array(agents.learning.memory_D)
+                        MPI.Request.Wait(req)
+                        req=comm.issend(data, dest=agents.ID, tag=11)
+                        agents.learning.memory_D.clear()
+                        log.message(" 6.1 after Sending memory D from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
 
-                if len(agents.learning.memory_GT)>=4:
+                if len(agents.learning.memory_GT)>=2:
                     log.message("8. Before Sending memory GT of lenght "+str(len(agents.learning.memory_GT))+" "+str(rank))
                     if init_G:
                         init_G=False
@@ -230,16 +230,16 @@ if rank>(number_rooms*2)-1:
                         log.message("8. after init Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
                     else:
-                        if MPI.Request.Test(req_g):
-                            data_G=np.array(agents.learning.memory_GT)
-                            MPI.Request.Wait(req_g)
-                            req_g=comm.issend(data_G, dest=agents.ID, tag=21)
-                            agents.learning.memory_GT.clear()
-                            log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
+                        # if MPI.Request.Test(req_g):
+                        data_G=np.array(agents.learning.memory_GT)
+                        MPI.Request.Wait(req_g)
+                        req_g=comm.issend(data_G, dest=agents.ID, tag=21)
+                        agents.learning.memory_GT.clear()
+                        log.message("8. after Sending memory GT from: "+" "+str(rank)+" to:  "+str(agents.ID))
 
 
 
-                # if len(agents.learning.memory_D)>=128:
+                # if len(agents.learning.memory_D)>=20:
                 #     log.message(" 6.Start to send memory D of lenght "+str(len(agents.learning.memory_D))+" "+str(rank))
                 #     if init:
                 #         init=False
@@ -330,7 +330,10 @@ if rank>(number_rooms*2)-1:
                     # break
                 # print("DONE BEFORE DONE ", agents.done)
                 if agents.time_out(step):
-                    log.message("Time out!! of "+str(self.agent_name ))
+                    log.message("Time OUT!! and Agent sends to CLOUD 1 the order to update Pa with tag 321")
+                    d = True    #para enviar algo
+                    comm.send(d, dest=0, tag=321)
+                    log.message("Time out!!")
                     break
                 if agents.done:
                     #envia a CLOUD 2 AVISO PARA ACTUALIZAR PA
@@ -456,16 +459,16 @@ if rank<number_rooms:
 
             dones=False
             if comm.Iprobe(source=MPI.ANY_SOURCE,tag=321):
-                log.message("before receive done" +str(rank))
+                log.message("before update PA" +str(rank))
                 Dones=comm.recv(source=MPI.ANY_SOURCE, tag=321)
                 # log.message(" receive done" +str(rank)+"tag: "+str(321))
-                dones=Dones[0]
-                ag=Dones[1]
-                print("DDD",dones,ag)
-                sys.stdout.flush()
+                # dones=Dones[0]
+                # ag=Dones[1]
+                # print("DDD",dones,ag)
+                # sys.stdout.flush()
                 cluster.increase_fact()
                 cluster.update_target_cloud()
-                log.message( "19.1 UPDATE TARGET s CLOUD for done, tag " + str(321))
+                log.message( "19.1 UPDATE TARGET s CLOUD for done, tag " + str(321)+ "New PA CLOUD 1: "+str(cluster.Pa))
                 comm.send(dones,dest=1,tag=333)
                 log.message("29 CLOUD 1 sends alert to CLOUD 2 to update Pa with tag 333. "+" "+str(rank))
 
@@ -492,6 +495,7 @@ if rank<number_rooms:
                 log.message("7.1  data memory D received")
                 for i in range(len(data)):
                     cluster.append_D(data[i][0], data[i][1],data[i][2], data[i][3], data[i][4])
+
             # Ask if any agent has sent data from memory_G
             # log.message("7.0 waiting append data memory D " + str(rank) +"tag: "+str(3*(size+1)+rank*10000))
             if comm.Iprobe(source=MPI.ANY_SOURCE,tag=21):
@@ -586,6 +590,8 @@ if rank>number_rooms-1 and rank<number_rooms*2:
         if comm.Iprobe(source=0,tag=14):
             log.message("12.0 before receive network tag:"+str(14))
             weight_q=comm.recv(source=0,tag=14)
+            print("pesos recibidos. PA: ", cluster2.Pa)
+            print(weight_q)
             cluster2.q_model.set_weights(weight_q)
             # weight_target=comm.recv(source=0,tag=24)
             # cluster2.target_model.set_weights(weight_target)
@@ -600,5 +606,5 @@ if rank>number_rooms-1 and rank<number_rooms*2:
 
         if comm.Iprobe(source=0,tag=333):                #CAMBIO
             alert=comm.recv(source=0,tag=333)
-            log.message("28 CLOUD 2 receives alert from CLOUD 1 to update Pa with tag 333. "+" "+str(rank))
             cluster2.increase_fact()
+            log.message("28 CLOUD 2 receives alert from CLOUD 1 to update Pa with tag 333. "+" "+str(rank)+ "New PA CLOUD 1: "+str(cluster2.Pa))
